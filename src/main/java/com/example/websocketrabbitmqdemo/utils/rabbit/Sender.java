@@ -1,11 +1,11 @@
-package com.example.websocketrabbitmqdemo.rabbit;
+package com.example.websocketrabbitmqdemo.utils.rabbit;
 
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
-@Service
+@Component
 public class Sender {
     @Autowired
     private RabbitTemplate rabbitTemplate;

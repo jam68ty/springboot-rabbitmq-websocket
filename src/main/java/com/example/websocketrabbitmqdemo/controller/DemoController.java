@@ -1,6 +1,6 @@
 package com.example.websocketrabbitmqdemo.controller;
 
-import com.example.websocketrabbitmqdemo.rabbit.Sender;
+import com.example.websocketrabbitmqdemo.utils.rabbit.Sender;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -15,6 +15,11 @@ public class DemoController {
     @RequestMapping(value = "/send", method = RequestMethod.GET)
     public String send(String msg){
         sender.send(msg);
+        return "消息：" + msg + ",已發送";
+    }
+
+    @RequestMapping(value = "/hi", method = RequestMethod.GET)
+    public String hi(String msg){
         return "消息：" + msg + ",已發送";
     }
 }
