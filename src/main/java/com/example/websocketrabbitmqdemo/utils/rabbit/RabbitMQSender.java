@@ -8,6 +8,7 @@ import org.springframework.data.jpa.convert.threeten.Jsr310JpaConverters;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 
 @Component
 public class RabbitMQSender {
@@ -35,10 +36,10 @@ public class RabbitMQSender {
      * @param msg
      * @param sendUserId
      */
-    public void sendDialogue(String msg, String sendUserId, String receiveUserId) {
+    public void sendDialogue(String sendUserId, String receiveUserId,String msg) {
         logger.info(logSenderFormat, msg);
-        String routingKey = sendUserId + ":" + receiveUserId;
-        logger.info(logRoutingKey, sendUserId);
+        String routingKey = sendUserId + "_" + receiveUserId + new Date().getTime();
+        logger.info(logRoutingKey, routingKey);
         logger.info(receiver, receiveUserId);
         this.rabbitTemplate.convertAndSend(exchange, routingKey, msg);
     }

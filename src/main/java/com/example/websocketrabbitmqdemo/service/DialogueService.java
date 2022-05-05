@@ -1,23 +1,23 @@
 package com.example.websocketrabbitmqdemo.service;
 
-import com.example.websocketrabbitmqdemo.dto.request.DialogueRequest;
+import com.example.websocketrabbitmqdemo.dto.request.chat.ChatroomRequest;
+import com.example.websocketrabbitmqdemo.dto.request.chat.DialogueRequest;
 import com.example.websocketrabbitmqdemo.utils.responseinfo.ResponseInfo;
-import org.springframework.transaction.annotation.Transactional;
+import org.eclipse.paho.client.mqttv3.MqttException;
 
 public interface DialogueService {
 
+
+    //建立聊天室
+    public ResponseInfo createChatroom(ChatroomRequest chatroomRequest) throws MqttException;
     // 新增對話
     public ResponseInfo createDialogue(DialogueRequest request) throws Exception;
 
-    @Transactional
-    public ResponseInfo deleteDialogueById(String dialogueId);
+    public ResponseInfo getDialogueList(String userId, Integer startIndex, Integer size);
 
-
-    public ResponseInfo getDialogues(Integer startIndex, Integer size);
-
-    public ResponseInfo getDialogueRecords(Integer startIndex, Integer size);
-
-    public ResponseInfo getUnreadCount(String userId);
-
-    public void updateUnreadCount(String dialogueId, Long readDatetime);
+    public ResponseInfo getDialogueRecords(String chatroomId, Integer startIndex, Integer size);
+//
+//    public ResponseInfo getUnreadCount(String userId);
+//
+//    public void updateUnreadCount(String dialogueId, Long readDatetime);
 }

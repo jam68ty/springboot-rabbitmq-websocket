@@ -1,4 +1,4 @@
-package com.example.websocketrabbitmqdemo.dto.request;
+package com.example.websocketrabbitmqdemo.dto.request.chat;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -9,10 +9,10 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@ApiModel(description = "test")
+@ApiModel(description = "dialogueDTO")
 public class DialogueRequest {
-    @ApiModelProperty(value = "出價類別", required = true)
-    private String listModeId;
+    @ApiModelProperty(value = "聊天室id", required = true)
+    private String chatroomId;
 
     @ApiModelProperty(value = "發送人id", required = true)
     private String sendUserId;
@@ -20,9 +20,7 @@ public class DialogueRequest {
     @ApiModelProperty(value = "接收人id", required = true)
     private String receiveUserId;
 
-    @ApiModelProperty(value = "接收者已讀", required = true)
-    private boolean receiverReaded;
-
+    //SKU, Order, normal, image
     @ApiModelProperty(value = "對話類型(C:文字/I:圖片/M:系統訊息/D:系統敘述)", required = true)
     private String type;
 

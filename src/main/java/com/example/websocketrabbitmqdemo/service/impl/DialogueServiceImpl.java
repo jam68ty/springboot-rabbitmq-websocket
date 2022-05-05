@@ -1,17 +1,24 @@
 package com.example.websocketrabbitmqdemo.service.impl;
 
+import com.example.websocketrabbitmqdemo.config.MqttConfig;
 import com.example.websocketrabbitmqdemo.dao.entity.DialogueEntity;
+import com.example.websocketrabbitmqdemo.dao.entity.ChatroomEntity;
 import com.example.websocketrabbitmqdemo.dao.repositroy.DialogueRepository;
-import com.example.websocketrabbitmqdemo.dto.request.DialogueRequest;
-import com.example.websocketrabbitmqdemo.dto.response.DialogueResponse;
+import com.example.websocketrabbitmqdemo.dao.repositroy.ChatroomRepository;
+import com.example.websocketrabbitmqdemo.dto.request.chat.ChatroomRequest;
+import com.example.websocketrabbitmqdemo.dto.request.chat.DialogueRequest;
+import com.example.websocketrabbitmqdemo.dto.response.chat.ChatroomListResponse;
+import com.example.websocketrabbitmqdemo.dto.response.chat.DialogueResponse;
+import com.example.websocketrabbitmqdemo.dto.response.chat.ChatroomResponse;
 import com.example.websocketrabbitmqdemo.service.DialogueService;
 import com.example.websocketrabbitmqdemo.utils.pagination.OffsetBasedPageRequest;
 import com.example.websocketrabbitmqdemo.utils.rabbit.RabbitMQSender;
 import com.example.websocketrabbitmqdemo.utils.responseinfo.ResponseInfo;
+import org.eclipse.paho.client.mqttv3.MqttException;
+import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -19,10 +26,7 @@ import org.springframework.stereotype.Service;
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -34,12 +38,64 @@ public class DialogueServiceImpl implements DialogueService {
     private DialogueRepository dialogueRepo;
 
     @Autowired
+    private ChatroomRepository chatroomRepository;
+
+    @Autowired
     private RabbitMQSender sender;
 
     @Autowired
     HttpServletRequest httpServletRequest;
 
     Executor executor = Executors.newFixedThreadPool(3);
+
+    @Override
+    public ResponseInfo createChatroom(ChatroomRequest chatroomRequest) throws MqttException {
+        //case 1: trigger by storeId => store information
+        //case 2: trigger by skuId => sku information
+        //case 3: trigger by skuId in orderId => order information, sku information
+        LocalDateTime now = LocalDateTime.now();
+        String chatroomId = chatroomRequest.getUserId() + "_" + chatroomRequest.getTriggerBy().getStoreId();
+        MqttMessage mqttMessage = new MqttMessage();
+        MqttConfig.getInstance().publish(chatroomId, mqttMessage);
+
+        var responseInfo = new ResponseInfo();
+        ChatroomResponse response = new ChatroomResponse();
+        response.setChatroomId(chatroomId);
+        response.setLastModifiedDate(now);
+        response.setSenderUserId(chatroomRequest.getUserId());
+        response.setReceiverUserId(chatroomRequest.getTriggerBy().getStoreId());
+
+        var chatroomEntity = new ChatroomEntity();
+        chatroomEntity.setChatroomId(response.getChatroomId());
+        chatroomEntity.setCreatedDate(now);
+        chatroomEntity.setLastModifiedDate(now);
+        chatroomEntity.setCreatedUserId(chatroomRequest.getUserId());
+        chatroomEntity.setReceiveUserId(chatroomRequest.getTriggerBy().getStoreId());
+        String storeId = chatroomRequest.getTriggerBy().getStoreId();
+        String skuId = chatroomRequest.getTriggerBy().getSkuId();
+        String orderId = chatroomRequest.getTriggerBy().getOrderId();
+        response.setReceiverUserId(storeId);
+        if (storeId != null) {
+            if (skuId == null && orderId == null) {
+                chatroomEntity.setTriggerBy(storeId);
+                response.setInformation(storeId);
+            } else if (skuId != null && orderId == null) {
+                chatroomEntity.setTriggerBy(skuId);
+                response.setInformation(skuId);
+            } else if (skuId != null && orderId != null) {
+                chatroomEntity.setTriggerBy(skuId + "_in_" + orderId);
+                response.setInformation(skuId + "_in_" + orderId);
+            }
+        } else {
+            logger.info("trigger error!");
+        }
+        chatroomRepository.save(chatroomEntity);
+
+        responseInfo.getStatus().setCode("success");
+        responseInfo.putData("chatroom", response);
+
+        return responseInfo;
+    }
 
     @Override
     public ResponseInfo createDialogue(DialogueRequest request) throws Exception {
@@ -59,8 +115,8 @@ public class DialogueServiceImpl implements DialogueService {
         dialogueEntity.setReceiveUserId(request.getReceiveUserId());
         dialogueEntity.setSendUserId(request.getSendUserId());
         dialogueEntity.setType(request.getType());
+        dialogueEntity.setChatroomId(request.getChatroomId());
 
-//         insert entity
         dialogueRepo.save(dialogueEntity);
         var savedDialogue =
                 dialogueRepo.findByDialogueId(dialogueEntity.getDialogueId()).orElseThrow(() -> {
@@ -70,7 +126,13 @@ public class DialogueServiceImpl implements DialogueService {
                         throw new RuntimeException(e);
                     }
                 });
+        MqttMessage mqttMessage = new MqttMessage();
+        mqttMessage.setQos(1);
+        mqttMessage.setRetained(true);
+        mqttMessage.setPayload(request.getContent().getBytes());
 
+        MqttConfig.getInstance().publish(request.getChatroomId(), mqttMessage);
+        chatroomRepository.updateLatestDialogueId(dialogueEntity.getDialogueId(), request.getChatroomId(), now);
         // responseInfo
         var responseInfo = new ResponseInfo();
         executor.execute(() -> {
@@ -95,16 +157,88 @@ public class DialogueServiceImpl implements DialogueService {
         var content = dialogueEntity.getContent();
 
         // 取得最新訊息Info (外面的)
-        sender.sendDialogue(content, sendUserIdId, receiveUserId);
+        sender.sendDialogue(sendUserIdId, receiveUserId, content);
     }
 
     @Override
-    public ResponseInfo deleteDialogueById(String dialogueId) {
-        return null;
+    public ResponseInfo getDialogueList(String userId, Integer startIndex, Integer size) {
+        var sortMethod = Sort.by(Sort.Direction.DESC, "lastModifiedDate");
+        var pageRequest = (startIndex == 0 && size == 0) ? Pageable.unpaged()
+                : new OffsetBasedPageRequest(startIndex, size, sortMethod);
+
+        var ChatroomOpt = chatroomRepository.findChatroomByIdUserId(userId, pageRequest);
+
+        ResponseInfo responseInfo = new ResponseInfo();
+        responseInfo.getStatus().setCode("success");
+        if (ChatroomOpt.isEmpty()) {
+            responseInfo.putData("chatroom", new ArrayList<ChatroomListResponse>());
+            return responseInfo;
+        }
+
+        var returnLatestChatroom = new LinkedList<ChatroomListResponse>();
+        var totalLatestChatroom = ChatroomOpt.get();
+
+//        var unreadCounts = new HashMap<String, Integer>();
+//        dialogueRepo.getUnreadCounts(userId).forEach(info -> {
+//            String pledgeId = info[0].toString();
+//            int count = Integer.parseInt(info[1].toString());
+//            unreadCounts.put(pledgeId, count);
+//        });
+
+        int count = 0;
+        responseInfo.putData("totalElements", totalLatestChatroom.getTotalElements());
+        responseInfo.putData("totalPages", totalLatestChatroom.getTotalPages());
+        for (var latestRes : totalLatestChatroom.getContent()) {
+
+//            if (userId.equals(latestRes.getHostPk())) {
+//                latestRes.setTarget(latestRes.getGuestPk());
+//            } else if (userId.equals(latestRes.getGuestPk())) {
+//                latestRes.setTarget(latestRes.getHostPk());
+//            } else {
+//                latestRes.setTarget("");
+//            }
+
+            // no readed count
+//            int noReadedCount = unreadCounts.containsKey(latestRes.getPledgeId())
+//                    ? unreadCounts.get(latestRes.getPledgeId())
+//                    : 0;
+//            latestRes.setNotReadCount(noReadedCount);
+
+//            count++;
+//
+//            if (!"".equals(latestRes.getTarget())) {
+//                userRepo.findById(latestRes.getTarget()).ifPresent(userProfile -> {
+//                    int commentCount =
+//                            commentRepo.getCommentIdByCommentToCount(latestRes.getTarget());
+//                    latestRes.setTargetUser(userProfile, commentCount);
+//                });
+//            }
+//
+            //TODO: Mapper
+            ChatroomListResponse response = new ChatroomListResponse();
+            response.setChatroomId(latestRes.getChatroomId());
+            if (latestRes.getCreatedUserId() == userId) {
+                response.setUserId(userId);
+                response.setReceiverUserId(latestRes.getReceiveUserId());
+            } else {
+                response.setUserId(latestRes.getReceiveUserId());
+                response.setReceiverUserId(userId);
+            }
+            response.setLastModifiedDate(latestRes.getLastModifiedDate());
+            response.setLatestDialogueId(latestRes.getLatestDialogueId());
+
+
+            returnLatestChatroom.add(response);
+        }
+//
+        responseInfo.putData("chatroom", returnLatestChatroom);
+        return responseInfo;
     }
 
+
     @Override
-    public ResponseInfo getDialogues(Integer startIndex, Integer size) {
+    public ResponseInfo getDialogueRecords(String chatroomId, Integer startIndex, Integer size) {
+
 //        String userId = httpServletRequest.getAttribute("hybrisPk").toString();
 //        String lang = LocaleContextHolder.getLocale().getLanguage();
 
@@ -112,7 +246,7 @@ public class DialogueServiceImpl implements DialogueService {
         var pageRequest = (startIndex == 0 && size == 0) ? Pageable.unpaged()
                 : new OffsetBasedPageRequest(startIndex, size, sortMethod);
 
-        var DialogueOpt = dialogueRepo.findAllDialogue(pageRequest);
+        var DialogueOpt = dialogueRepo.findAllDialogue(chatroomId, pageRequest);
 
         ResponseInfo responseInfo = new ResponseInfo();
         responseInfo.getStatus().setCode("success");
@@ -131,7 +265,7 @@ public class DialogueServiceImpl implements DialogueService {
 //            unreadCounts.put(pledgeId, count);
 //        });
 
-        int count = 0;
+//            int count = 0;
         responseInfo.putData("totalPages", totalLatestDialogue.getTotalPages());
         responseInfo.putData("totalElements", totalLatestDialogue.getTotalElements());
         for (var latestRes : totalLatestDialogue.getContent()) {
@@ -164,7 +298,6 @@ public class DialogueServiceImpl implements DialogueService {
             DialogueResponse response = new DialogueResponse();
             response.setDialogueId(latestRes.getDialogueId());
             response.setContent(latestRes.getContent());
-            response.setCreatedDate(latestRes.getCreatedDate().toInstant(ZoneOffset.of("+08:00")).toEpochMilli());
             response.setType(latestRes.getType());
             response.setSendUserId(latestRes.getSendUserId());
             response.setLastModifiedDate(latestRes.getLastModifiedDate().toInstant(ZoneOffset.of("+08:00")).toEpochMilli());
@@ -178,18 +311,4 @@ public class DialogueServiceImpl implements DialogueService {
         return responseInfo;
     }
 
-    @Override
-    public ResponseInfo getDialogueRecords(Integer startIndex, Integer size) {
-        return null;
-    }
-
-    @Override
-    public ResponseInfo getUnreadCount(String userId) {
-        return null;
-    }
-
-    @Override
-    public void updateUnreadCount(String dialogueId, Long readDatetime) {
-
-    }
 }

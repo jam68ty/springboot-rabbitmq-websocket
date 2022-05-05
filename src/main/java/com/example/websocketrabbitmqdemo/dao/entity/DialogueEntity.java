@@ -28,18 +28,8 @@ public class DialogueEntity implements Serializable {
     @Column(name = "send_user_id", nullable = false)
     private String sendUserId;
 
-//    @OneToOne
-//    @JoinColumn(name = "send_user_id", referencedColumnName = "hybris_pk", insertable = false, updatable = false)
-//    @NotFound(action = NotFoundAction.IGNORE)
-//    private UserProfileEntity sendUser;
-
     @Column(name = "receive_user_id", nullable = false)
     private String receiveUserId;
-
-//    @OneToOne
-//    @JoinColumn(name = "receive_user_id", referencedColumnName = "hybris_pk", insertable = false, updatable = false)
-//    @NotFound(action = NotFoundAction.IGNORE)
-//    private UserProfileEntity receiveUser;
 
     @Column(name = "sender_readed", nullable = false)
     private boolean senderReaded = true;
@@ -56,12 +46,6 @@ public class DialogueEntity implements Serializable {
     @Column(name = "`type`", nullable = false)
     private String type;
 
-//    @Column(name = "content_zh", nullable = false)
-//    private String contentZh;
-//
-//    @Column(name = "content_en", nullable = false)
-//    private String contentEn;
-
     @Column(name = "content")
     private String content;
 
@@ -73,6 +57,9 @@ public class DialogueEntity implements Serializable {
 
     @Column(name = "last_modified_date", nullable = false)
     private LocalDateTime lastModifiedDate;
+
+    @Column(name = "chatroom_id", nullable = false)
+    private String chatroomId;
 
     @PostPersist
     public void createDialogueId() {
