@@ -5,7 +5,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 @Data
-@ApiModel(description = "default message create/update DTO")
+@ApiModel(description = "default message DTO")
 public class DefaultMessageRequest {
     @ApiModelProperty(value = "商戶 id", required = true, position = 0)
     private String merchantId;

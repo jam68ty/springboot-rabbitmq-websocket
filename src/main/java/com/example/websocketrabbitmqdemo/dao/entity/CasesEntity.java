@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "case")
+@Table(name = "cases")
 public class CasesEntity {
 
     private static final long serialVersionUID = 1L;

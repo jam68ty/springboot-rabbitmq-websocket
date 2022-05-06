@@ -5,7 +5,6 @@ import com.example.websocketrabbitmqdemo.dao.entity.DialogueEntity;
 import com.example.websocketrabbitmqdemo.dao.entity.ChatroomEntity;
 import com.example.websocketrabbitmqdemo.dao.repositroy.DialogueRepository;
 import com.example.websocketrabbitmqdemo.dao.repositroy.ChatroomRepository;
-import com.example.websocketrabbitmqdemo.dto.request.chat.ChatroomRequest;
 import com.example.websocketrabbitmqdemo.dto.request.chat.DialogueRequest;
 import com.example.websocketrabbitmqdemo.dto.response.chat.ChatroomListResponse;
 import com.example.websocketrabbitmqdemo.dto.response.chat.DialogueResponse;
@@ -48,13 +47,11 @@ public class DialogueServiceImpl implements DialogueService {
 
     Executor executor = Executors.newFixedThreadPool(3);
 
+
     @Override
-    public ResponseInfo createChatroom(ChatroomRequest chatroomRequest) throws MqttException {
-        //case 1: trigger by storeId => store information
-        //case 2: trigger by skuId => sku information
-        //case 3: trigger by skuId in orderId => order information, sku information
+    public ResponseInfo createChatroom(String userId, String storeId) throws MqttException {
         LocalDateTime now = LocalDateTime.now();
-        String chatroomId = chatroomRequest.getUserId() + "_" + chatroomRequest.getTriggerBy().getStoreId();
+        String chatroomId = userId + "_" + storeId;
         MqttMessage mqttMessage = new MqttMessage();
         MqttConfig.getInstance().publish(chatroomId, mqttMessage);
 
@@ -62,39 +59,89 @@ public class DialogueServiceImpl implements DialogueService {
         ChatroomResponse response = new ChatroomResponse();
         response.setChatroomId(chatroomId);
         response.setLastModifiedDate(now);
-        response.setSenderUserId(chatroomRequest.getUserId());
-        response.setReceiverUserId(chatroomRequest.getTriggerBy().getStoreId());
+        response.setSenderUserId(userId);
+        response.setReceiverUserId(storeId);
+        response.setInformation("store information: " + storeId);
 
         var chatroomEntity = new ChatroomEntity();
         chatroomEntity.setChatroomId(response.getChatroomId());
         chatroomEntity.setCreatedDate(now);
         chatroomEntity.setLastModifiedDate(now);
-        chatroomEntity.setCreatedUserId(chatroomRequest.getUserId());
-        chatroomEntity.setReceiveUserId(chatroomRequest.getTriggerBy().getStoreId());
-        String storeId = chatroomRequest.getTriggerBy().getStoreId();
-        String skuId = chatroomRequest.getTriggerBy().getSkuId();
-        String orderId = chatroomRequest.getTriggerBy().getOrderId();
-        response.setReceiverUserId(storeId);
-        if (storeId != null) {
-            if (skuId == null && orderId == null) {
-                chatroomEntity.setTriggerBy(storeId);
-                response.setInformation(storeId);
-            } else if (skuId != null && orderId == null) {
-                chatroomEntity.setTriggerBy(skuId);
-                response.setInformation(skuId);
-            } else if (skuId != null && orderId != null) {
-                chatroomEntity.setTriggerBy(skuId + "_in_" + orderId);
-                response.setInformation(skuId + "_in_" + orderId);
-            }
-        } else {
-            logger.info("trigger error!");
-        }
+        chatroomEntity.setCreatedUserId(userId);
+        chatroomEntity.setReceiveUserId(storeId);
+        chatroomEntity.setTriggerBy("store: " + storeId);
+
         chatroomRepository.save(chatroomEntity);
 
         responseInfo.getStatus().setCode("success");
         responseInfo.putData("chatroom", response);
 
         return responseInfo;
+
+    }
+
+    @Override
+    public ResponseInfo createChatroom(String userId, String storeId, String skuId) throws MqttException {
+        LocalDateTime now = LocalDateTime.now();
+        String chatroomId = userId + "_" + storeId;
+        MqttMessage mqttMessage = new MqttMessage();
+        MqttConfig.getInstance().publish(chatroomId, mqttMessage);
+
+        var responseInfo = new ResponseInfo();
+        ChatroomResponse response = new ChatroomResponse();
+        response.setChatroomId(chatroomId);
+        response.setLastModifiedDate(now);
+        response.setSenderUserId(userId);
+        response.setReceiverUserId(storeId);
+        response.setInformation("sku information: " + skuId + " and store information: " + storeId);
+
+        var chatroomEntity = new ChatroomEntity();
+        chatroomEntity.setChatroomId(response.getChatroomId());
+        chatroomEntity.setCreatedDate(now);
+        chatroomEntity.setLastModifiedDate(now);
+        chatroomEntity.setCreatedUserId(userId);
+        chatroomEntity.setReceiveUserId(storeId);
+        chatroomEntity.setTriggerBy("sku: " + skuId);
+
+        chatroomRepository.save(chatroomEntity);
+
+        responseInfo.getStatus().setCode("success");
+        responseInfo.putData("chatroom", response);
+
+        return responseInfo;
+
+    }
+
+    @Override
+    public ResponseInfo createChatroom(String userId, String storeId, String skuId, String orderId) throws MqttException {
+        LocalDateTime now = LocalDateTime.now();
+        String chatroomId = userId + "_" + storeId;
+        MqttMessage mqttMessage = new MqttMessage();
+        MqttConfig.getInstance().publish(chatroomId, mqttMessage);
+
+        var responseInfo = new ResponseInfo();
+        ChatroomResponse response = new ChatroomResponse();
+        response.setChatroomId(chatroomId);
+        response.setLastModifiedDate(now);
+        response.setSenderUserId(userId);
+        response.setReceiverUserId(storeId);
+        response.setInformation("information sku: " + skuId + " in order: " + orderId);
+
+        var chatroomEntity = new ChatroomEntity();
+        chatroomEntity.setChatroomId(response.getChatroomId());
+        chatroomEntity.setCreatedDate(now);
+        chatroomEntity.setLastModifiedDate(now);
+        chatroomEntity.setCreatedUserId(userId);
+        chatroomEntity.setReceiveUserId(storeId);
+        chatroomEntity.setTriggerBy("sku: " + skuId + " in order: " + orderId);
+
+        chatroomRepository.save(chatroomEntity);
+
+        responseInfo.getStatus().setCode("success");
+        responseInfo.putData("chatroom", response);
+
+        return responseInfo;
+
     }
 
     @Override

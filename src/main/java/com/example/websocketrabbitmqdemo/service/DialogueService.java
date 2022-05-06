@@ -1,6 +1,5 @@
 package com.example.websocketrabbitmqdemo.service;
 
-import com.example.websocketrabbitmqdemo.dto.request.chat.ChatroomRequest;
 import com.example.websocketrabbitmqdemo.dto.request.chat.DialogueRequest;
 import com.example.websocketrabbitmqdemo.utils.responseinfo.ResponseInfo;
 import org.eclipse.paho.client.mqttv3.MqttException;
@@ -9,7 +8,11 @@ public interface DialogueService {
 
 
     //建立聊天室
-    public ResponseInfo createChatroom(ChatroomRequest chatroomRequest) throws MqttException;
+    public ResponseInfo createChatroom(String userId, String storeId) throws MqttException;
+
+    public ResponseInfo createChatroom(String userId, String storeId,String skuId) throws MqttException;
+
+    public ResponseInfo createChatroom(String userId, String storeId, String skuId, String orderId) throws MqttException;
     // 新增對話
     public ResponseInfo createDialogue(DialogueRequest request) throws Exception;
 

@@ -26,7 +26,7 @@ public class DefaultMessageController {
             @ApiResponse(code = 200, message = "success", response = DefaultMessageResponse.class)})
     @ResponseStatus(HttpStatus.OK)
     public ResponseInfo createDefaultMessage(
-            @ApiParam(value = "defaultMessageRequest") @RequestBody DefaultMessageRequest defaultMessageRequest) throws MqttException {
+            @RequestBody DefaultMessageRequest defaultMessageRequest) throws MqttException {
         return defaultMessageService.createDefaultMessage(defaultMessageRequest);
     }
 
@@ -36,7 +36,7 @@ public class DefaultMessageController {
             @ApiResponse(code = 200, message = "success", response = DefaultMessageResponse.class)})
     @ResponseStatus(HttpStatus.OK)
     public ResponseInfo getDefaultMessageByMerchantId(
-            @ApiParam(value = "merchant id") @RequestParam(value = "merchantId") String merchantId) throws MqttException {
+            @ApiParam(value = "商戶id") @RequestParam(value = "merchantId") String merchantId) throws MqttException {
         return defaultMessageService.getDefaultMessageByMerchantId(merchantId);
     }
 
@@ -46,18 +46,18 @@ public class DefaultMessageController {
             @ApiResponse(code = 200, message = "success", response = DefaultMessageResponse.class)})
     @ResponseStatus(HttpStatus.OK)
     public ResponseInfo getDefaultMessageByMerchantIdAndType(
-            @ApiParam(value = "merchant id") @RequestParam(value = "merchantId") String merchantId,
-            @ApiParam(value = "default message type") @RequestParam(value = "defaultMessageType") String defaultMessageType) throws MqttException {
+            @ApiParam(value = "商戶id") @RequestParam(value = "merchantId") String merchantId,
+            @ApiParam(value = "預設訊息類型") @RequestParam(value = "defaultMessageType") String defaultMessageType) throws MqttException {
         return defaultMessageService.getDefaultMessageByMerchantIdAndType(merchantId, defaultMessageType);
     }
 
     @ApiOperation(value = "更新預設訊息", notes = "update default message")
-    @PostMapping(value = "/updateDefaultMessage")
+    @PutMapping(value = "/updateDefaultMessage")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "success", response = DefaultMessageResponse.class)})
     @ResponseStatus(HttpStatus.OK)
     public ResponseInfo updateDefaultMessage(
-            @ApiParam(value = "defaultMessageRequest") @RequestBody DefaultMessageRequest defaultMessageRequest) throws MqttException {
+            @RequestBody DefaultMessageRequest defaultMessageRequest) throws MqttException {
         return defaultMessageService.updateDefaultMessage(defaultMessageRequest);
     }
 
@@ -67,8 +67,8 @@ public class DefaultMessageController {
             @ApiResponse(code = 200, message = "success", response = DefaultMessageResponse.class)})
     @ResponseStatus(HttpStatus.OK)
     public ResponseInfo deleteDefaultMessage(
-            @ApiParam(value = "merchant id") @RequestParam(value = "merchantId") String merchantId,
-            @ApiParam(value = "default message type") @RequestParam(value = "defaultMessageType") String defaultMessageType) throws MqttException {
+            @ApiParam(value = "商戶id") @RequestParam(value = "merchantId") String merchantId,
+            @ApiParam(value = "預設訊息類型") @RequestParam(value = "defaultMessageType") String defaultMessageType) throws MqttException {
         return defaultMessageService.deleteDefaultMessageByMerchantIdAndType(merchantId, defaultMessageType);
     }
 
