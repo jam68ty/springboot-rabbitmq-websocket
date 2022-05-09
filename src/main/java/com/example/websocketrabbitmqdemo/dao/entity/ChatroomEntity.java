@@ -23,19 +23,25 @@ public class ChatroomEntity {
     @Column(name = "receive_user_id", nullable = false)
     private String receiveUserId;
 
-    @Column(name = "latest_dialogue_id", nullable = false)
-    private String latestDialogueId;
+    @Column(name = "BU_type", nullable = false)
+    private String BuType;
 
-    @Column(name = "trigger_by")
-    private String triggerBy;
+    @Column(name = "status", nullable = false)
+    private String status;
 
-    @Column(name = "status")
-    private boolean status;
+    @Column(name="close", nullable = false)
+    private boolean close;
 
     @Column(name = "created_date", nullable = false)
     private LocalDateTime createdDate;
 
     @Column(name = "last_modified_date", nullable = false)
     private LocalDateTime lastModifiedDate;
+
+    @Column(name = "latest_dialogue_id", nullable = false)
+    private String latestDialogueId;
+
+    @Column(name = "trigger_by", nullable = false)
+    private String triggerBy;
 
 }

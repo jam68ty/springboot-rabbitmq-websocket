@@ -15,10 +15,10 @@ public class DialogueRequest {
     private String chatroomId;
 
     @ApiModelProperty(value = "發送人id", required = true)
-    private String sendUserId;
+    private String senderUserId;
 
     @ApiModelProperty(value = "接收人id", required = true)
-    private String receiveUserId;
+    private String receiverUserId;
 
     //SKU, Order, normal, image
     @ApiModelProperty(value = "對話類型(C:文字/I:圖片/M:系統訊息/D:系統敘述)", required = true)

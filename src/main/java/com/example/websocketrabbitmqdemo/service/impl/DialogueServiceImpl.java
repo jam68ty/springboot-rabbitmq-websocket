@@ -3,16 +3,19 @@ package com.example.websocketrabbitmqdemo.service.impl;
 import com.example.websocketrabbitmqdemo.config.MqttConfig;
 import com.example.websocketrabbitmqdemo.dao.entity.DialogueEntity;
 import com.example.websocketrabbitmqdemo.dao.entity.ChatroomEntity;
+import com.example.websocketrabbitmqdemo.dao.entity.TriggerEntity;
 import com.example.websocketrabbitmqdemo.dao.repositroy.DialogueRepository;
 import com.example.websocketrabbitmqdemo.dao.repositroy.ChatroomRepository;
+import com.example.websocketrabbitmqdemo.dao.repositroy.TriggerRepository;
 import com.example.websocketrabbitmqdemo.dto.request.chat.DialogueRequest;
 import com.example.websocketrabbitmqdemo.dto.response.chat.ChatroomListResponse;
 import com.example.websocketrabbitmqdemo.dto.response.chat.DialogueResponse;
-import com.example.websocketrabbitmqdemo.dto.response.chat.ChatroomResponse;
+import com.example.websocketrabbitmqdemo.dto.response.chat.CreateChatroomResponse;
 import com.example.websocketrabbitmqdemo.service.DialogueService;
 import com.example.websocketrabbitmqdemo.utils.pagination.OffsetBasedPageRequest;
 import com.example.websocketrabbitmqdemo.utils.rabbit.RabbitMQSender;
 import com.example.websocketrabbitmqdemo.utils.responseinfo.ResponseInfo;
+import io.netty.util.internal.StringUtil;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.slf4j.Logger;
@@ -20,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.scheduling.Trigger;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
@@ -40,6 +44,9 @@ public class DialogueServiceImpl implements DialogueService {
     private ChatroomRepository chatroomRepository;
 
     @Autowired
+    private TriggerRepository triggerRepository;
+
+    @Autowired
     private RabbitMQSender sender;
 
     @Autowired
@@ -49,19 +56,23 @@ public class DialogueServiceImpl implements DialogueService {
 
 
     @Override
-    public ResponseInfo createChatroom(String userId, String storeId) throws MqttException {
+    public ResponseInfo createChatroom(String userId, String storeId, String buType) throws MqttException {
         LocalDateTime now = LocalDateTime.now();
         String chatroomId = userId + "_" + storeId;
         MqttMessage mqttMessage = new MqttMessage();
         MqttConfig.getInstance().publish(chatroomId, mqttMessage);
 
         var responseInfo = new ResponseInfo();
-        ChatroomResponse response = new ChatroomResponse();
+        CreateChatroomResponse response = new CreateChatroomResponse();
         response.setChatroomId(chatroomId);
         response.setLastModifiedDate(now);
         response.setSenderUserId(userId);
         response.setReceiverUserId(storeId);
-        response.setInformation("store information: " + storeId);
+        TriggerEntity trigger = new TriggerEntity();
+        trigger.setTriggerId("");
+        trigger.setStoreId(storeId);
+        triggerRepository.save(trigger);
+        response.setTriggerBy(trigger);
 
         var chatroomEntity = new ChatroomEntity();
         chatroomEntity.setChatroomId(response.getChatroomId());
@@ -69,8 +80,14 @@ public class DialogueServiceImpl implements DialogueService {
         chatroomEntity.setLastModifiedDate(now);
         chatroomEntity.setCreatedUserId(userId);
         chatroomEntity.setReceiveUserId(storeId);
-        chatroomEntity.setTriggerBy("store: " + storeId);
-
+        chatroomEntity.setTriggerBy(trigger.getTriggerId());
+        chatroomEntity.setBuType(buType);
+        if ("customer".equals(buType)){
+            chatroomEntity.setStatus("handling");
+        }
+        if ("support".equals(buType)){
+            chatroomEntity.setStatus("pending");
+        }
         chatroomRepository.save(chatroomEntity);
 
         responseInfo.getStatus().setCode("success");
@@ -81,19 +98,24 @@ public class DialogueServiceImpl implements DialogueService {
     }
 
     @Override
-    public ResponseInfo createChatroom(String userId, String storeId, String skuId) throws MqttException {
+    public ResponseInfo createChatroom(String userId, String storeId, String skuId, String buType) throws MqttException {
         LocalDateTime now = LocalDateTime.now();
         String chatroomId = userId + "_" + storeId;
         MqttMessage mqttMessage = new MqttMessage();
         MqttConfig.getInstance().publish(chatroomId, mqttMessage);
 
         var responseInfo = new ResponseInfo();
-        ChatroomResponse response = new ChatroomResponse();
+        CreateChatroomResponse response = new CreateChatroomResponse();
         response.setChatroomId(chatroomId);
         response.setLastModifiedDate(now);
         response.setSenderUserId(userId);
         response.setReceiverUserId(storeId);
-        response.setInformation("sku information: " + skuId + " and store information: " + storeId);
+        TriggerEntity trigger = new TriggerEntity();
+        trigger.setTriggerId("");
+        trigger.setStoreId(storeId);
+        trigger.setSkuId(skuId);
+        triggerRepository.save(trigger);
+        response.setTriggerBy(trigger);
 
         var chatroomEntity = new ChatroomEntity();
         chatroomEntity.setChatroomId(response.getChatroomId());
@@ -101,8 +123,14 @@ public class DialogueServiceImpl implements DialogueService {
         chatroomEntity.setLastModifiedDate(now);
         chatroomEntity.setCreatedUserId(userId);
         chatroomEntity.setReceiveUserId(storeId);
-        chatroomEntity.setTriggerBy("sku: " + skuId);
-
+        chatroomEntity.setTriggerBy(trigger.getTriggerId());
+        chatroomEntity.setBuType(buType);
+        if ("customer".equals(buType)){
+            chatroomEntity.setStatus("handling");
+        }
+        if ("support".equals(buType)){
+            chatroomEntity.setStatus("pending");
+        }
         chatroomRepository.save(chatroomEntity);
 
         responseInfo.getStatus().setCode("success");
@@ -113,19 +141,26 @@ public class DialogueServiceImpl implements DialogueService {
     }
 
     @Override
-    public ResponseInfo createChatroom(String userId, String storeId, String skuId, String orderId) throws MqttException {
+    public ResponseInfo createChatroom(String userId, String storeId, String skuId, String orderId, String buType) throws MqttException {
         LocalDateTime now = LocalDateTime.now();
         String chatroomId = userId + "_" + storeId;
         MqttMessage mqttMessage = new MqttMessage();
         MqttConfig.getInstance().publish(chatroomId, mqttMessage);
 
         var responseInfo = new ResponseInfo();
-        ChatroomResponse response = new ChatroomResponse();
+        CreateChatroomResponse response = new CreateChatroomResponse();
         response.setChatroomId(chatroomId);
         response.setLastModifiedDate(now);
         response.setSenderUserId(userId);
         response.setReceiverUserId(storeId);
-        response.setInformation("information sku: " + skuId + " in order: " + orderId);
+        TriggerEntity trigger = new TriggerEntity();
+        trigger.setTriggerId("");
+        trigger.setStoreId(storeId);
+        trigger.setSkuId(skuId);
+        trigger.setOrderId(orderId);
+        triggerRepository.save(trigger);
+        response.setTriggerBy(trigger);
+
 
         var chatroomEntity = new ChatroomEntity();
         chatroomEntity.setChatroomId(response.getChatroomId());
@@ -133,8 +168,14 @@ public class DialogueServiceImpl implements DialogueService {
         chatroomEntity.setLastModifiedDate(now);
         chatroomEntity.setCreatedUserId(userId);
         chatroomEntity.setReceiveUserId(storeId);
-        chatroomEntity.setTriggerBy("sku: " + skuId + " in order: " + orderId);
-
+        chatroomEntity.setTriggerBy(trigger.getTriggerId());
+        chatroomEntity.setBuType(buType);
+        if ("customer".equals(buType)){
+            chatroomEntity.setStatus("handling");
+        }
+        if ("support".equals(buType)){
+            chatroomEntity.setStatus("pending");
+        }
         chatroomRepository.save(chatroomEntity);
 
         responseInfo.getStatus().setCode("success");
@@ -148,7 +189,7 @@ public class DialogueServiceImpl implements DialogueService {
     public ResponseInfo createDialogue(DialogueRequest request) throws Exception {
 
         LocalDateTime now = LocalDateTime.now();
-        if (Objects.equals(request.getSendUserId(), "0")) {
+        if (Objects.equals(request.getSenderUserId(), "0")) {
             throw new Exception("can't find send user");
         }
 
@@ -159,8 +200,8 @@ public class DialogueServiceImpl implements DialogueService {
         dialogueEntity.setLastModifiedDate(now);
 
         dialogueEntity.setContent(request.getContent());
-        dialogueEntity.setReceiveUserId(request.getReceiveUserId());
-        dialogueEntity.setSendUserId(request.getSendUserId());
+        dialogueEntity.setReceiveUserId(request.getReceiverUserId());
+        dialogueEntity.setSendUserId(request.getSenderUserId());
         dialogueEntity.setType(request.getType());
         dialogueEntity.setChatroomId(request.getChatroomId());
 
@@ -208,7 +249,7 @@ public class DialogueServiceImpl implements DialogueService {
     }
 
     @Override
-    public ResponseInfo getDialogueList(String userId, Integer startIndex, Integer size) {
+    public ResponseInfo getDialogueList(String userId, String BuType, String status, Integer startIndex, Integer size) {
         var sortMethod = Sort.by(Sort.Direction.DESC, "lastModifiedDate");
         var pageRequest = (startIndex == 0 && size == 0) ? Pageable.unpaged()
                 : new OffsetBasedPageRequest(startIndex, size, sortMethod);
@@ -346,10 +387,10 @@ public class DialogueServiceImpl implements DialogueService {
             response.setDialogueId(latestRes.getDialogueId());
             response.setContent(latestRes.getContent());
             response.setType(latestRes.getType());
-            response.setSendUserId(latestRes.getSendUserId());
-            response.setLastModifiedDate(latestRes.getLastModifiedDate().toInstant(ZoneOffset.of("+08:00")).toEpochMilli());
+            response.setSenderUserId(latestRes.getSendUserId());
+            response.setLastModifiedDate(latestRes.getLastModifiedDate());
             response.setShow(latestRes.isShow());
-            response.setReceiveUserId(latestRes.getReceiveUserId());
+            response.setReceiverUserId(latestRes.getReceiveUserId());
 
             returnLatestDialogue.add(response);
         }

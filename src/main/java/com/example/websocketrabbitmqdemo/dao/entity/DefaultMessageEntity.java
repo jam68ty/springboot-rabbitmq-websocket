@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import org.w3c.dom.Text;
 
 import javax.persistence.*;
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Data
@@ -13,7 +14,8 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "default_message")
-public class DefaultMessageEntity {
+public class DefaultMessageEntity implements Serializable {
+
     private static final long serialVersionUID = 1L;
 
     @Id

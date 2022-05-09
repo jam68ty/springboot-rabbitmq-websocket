@@ -13,16 +13,12 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Table(name = "cases")
 public class CasesEntity {
-
-    private static final long serialVersionUID = 1L;
-
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "case_serial")
-    private int caseSerial;
-
     @Column(name = "case_id", nullable = false)
     private String caseId;
+
+    @Column(name = "salesforce_case_id")
+    private int salesforceCaseId;
 
     @Column(name = "BU", nullable = false)
     private String BU;
@@ -44,10 +40,5 @@ public class CasesEntity {
 
     @Column(name = "last_modified_date", nullable = false)
     private LocalDateTime lastModifiedDate;
-
-    @PostPersist
-    public void createCaseId() {
-        this.caseId = "CASE" + String.format("%012d", caseSerial);
-    }
 
 }

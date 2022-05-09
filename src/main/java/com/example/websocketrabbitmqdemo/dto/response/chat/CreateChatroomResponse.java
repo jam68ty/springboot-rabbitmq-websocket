@@ -1,5 +1,6 @@
 package com.example.websocketrabbitmqdemo.dto.response.chat;
 
+import com.example.websocketrabbitmqdemo.dao.entity.TriggerEntity;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -7,8 +8,8 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-@ApiModel(description = "chatroomDTO")
-public class ChatroomResponse {
+@ApiModel(description = "createChatroomDTO")
+public class CreateChatroomResponse {
     @ApiModelProperty(value = "聊天室編號", position = 0)
     private String chatroomId;
 
@@ -19,7 +20,7 @@ public class ChatroomResponse {
     private String receiverUserId;
 
     @ApiModelProperty(value = "帶入資訊", position = 3)
-    private Object information;
+    private TriggerEntity triggerBy;
 
     @ApiModelProperty(value = "最新一筆聊天紀錄", position = 4)
     private String latestDialogueId;

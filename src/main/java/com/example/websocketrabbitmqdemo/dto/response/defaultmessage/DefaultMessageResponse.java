@@ -4,6 +4,8 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import java.time.LocalDateTime;
+
 @Data
 @ApiModel(description = "default message DTO")
 public class DefaultMessageResponse {
@@ -14,10 +16,10 @@ public class DefaultMessageResponse {
     @ApiModelProperty(value = "商戶 id", position = 1)
     private String merchantId;
 
-    @ApiModelProperty(value = "BU", position = 2)
+    @ApiModelProperty(value = "BU (AllBUs[both], HKTVmall, ESSE)", position = 2)
     private String BU;
 
-    @ApiModelProperty(value = "預設訊息類型", position = 3)
+    @ApiModelProperty(value = "預設訊息類型 (greeting, quickReply)", position = 3)
     private String defaultMessageType;
 
     @ApiModelProperty(value = "標題", position = 4)
@@ -29,9 +31,9 @@ public class DefaultMessageResponse {
     @ApiModelProperty(value = "訊息內容", position = 6)
     private String message;
 
-    @ApiModelProperty(value = "建立日期", position = 7, example = "0")
-    private Long createdDate;
+    @ApiModelProperty(value = "建立日期", position = 7)
+    private LocalDateTime createdDate;
 
-    @ApiModelProperty(value = "更新日期", position = 8, example = "0")
-    private Long lastModifiedDate;
+    @ApiModelProperty(value = "更新日期", position = 8)
+    private LocalDateTime lastModifiedDate;
 }

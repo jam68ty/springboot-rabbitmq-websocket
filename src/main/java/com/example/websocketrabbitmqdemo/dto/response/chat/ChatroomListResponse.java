@@ -25,4 +25,7 @@ public class ChatroomListResponse {
 
     @ApiModelProperty(value = "更新日期", position = 4)
     private LocalDateTime lastModifiedDate;
+
+    @ApiModelProperty(value = "聊天室是否關閉", position = 5)
+    private boolean close;
 }

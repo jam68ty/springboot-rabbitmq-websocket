@@ -10,10 +10,10 @@ public class DefaultMessageRequest {
     @ApiModelProperty(value = "商戶 id", required = true, position = 0)
     private String merchantId;
 
-    @ApiModelProperty(value = "BU", required = true, position = 1)
+    @ApiModelProperty(value = "BU (AllBUs[both], HKTVmall, ESSE)", required = true, position = 1)
     private String BU;
 
-    @ApiModelProperty(value = "預設訊息類型", required = true, position = 2)
+    @ApiModelProperty(value = "預設訊息類型 (greeting, quickReply)", required = true, position = 2)
     private String defaultMessageType;
 
     @ApiModelProperty(value = "標題", required = true, position = 3)

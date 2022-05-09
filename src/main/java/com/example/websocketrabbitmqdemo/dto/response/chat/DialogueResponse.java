@@ -4,6 +4,8 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import java.time.LocalDateTime;
+
 @Data
 @ApiModel(description = "對話記錄")
 public class DialogueResponse {
@@ -11,10 +13,13 @@ public class DialogueResponse {
     private String dialogueId;
 
     @ApiModelProperty(value = "發送人id", position = 1)
-    private String sendUserId;
+    private String senderUserId;
 
     @ApiModelProperty(value = "接收人id", position = 2)
-    private String receiveUserId;
+    private String receiverUserId;
+
+    @ApiModelProperty(value = "發送人已讀", position = 3)
+    private boolean senderReaded;
 
     @ApiModelProperty(value = "接收人已讀", position = 3)
     private boolean receiverReaded;
@@ -34,6 +39,9 @@ public class DialogueResponse {
     @ApiModelProperty(value = "是否顯示", position = 8)
     private boolean show;
 
-    @ApiModelProperty(value = "更新日期", position = 10, example = "0")
-    private Long lastModifiedDate;
+    @ApiModelProperty(value = "更新日期", position = 9)
+    private LocalDateTime lastModifiedDate;
+
+    @ApiModelProperty(value = "聊天室ID", position = 10)
+    private String chatroomId;
 }

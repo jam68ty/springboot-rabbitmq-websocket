@@ -7,9 +7,9 @@ public interface DefaultMessageService {
 
     public ResponseInfo createDefaultMessage(DefaultMessageRequest defaultMessageRequest);
 
-    public ResponseInfo getDefaultMessageByMerchantId(String merchantId);
-
     public ResponseInfo getDefaultMessageByMerchantIdAndType(String merchantId, String messageType);
+
+    public ResponseInfo getDefaultMessageByMerchantId(String merchantId);
 
     public ResponseInfo updateDefaultMessage(DefaultMessageRequest defaultMessageRequest);
 
